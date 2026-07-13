@@ -50,7 +50,7 @@ function RegisterPage() {
       return;
     }
     toast.success("Account created successfully.");
-    navigate({ to: "/login" });
+    navigate({ to: "/dashboard" });
   };
 
   return (

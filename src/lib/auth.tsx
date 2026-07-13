@@ -55,6 +55,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       };
 
       await setDoc(doc(usersRef, id), newUser);
+      localStorage.setItem(SESSION_KEY, JSON.stringify(newUser));
+      setUser(newUser);
       return { ok: true };
     } catch (error: any) {
       return { ok: false, error: error.message || "Failed to register" };
