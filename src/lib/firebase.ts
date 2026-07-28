@@ -4,13 +4,13 @@ import { getFirestore } from "firebase/firestore";
 
 // Your web app's Firebase configuration using Vite environment variables
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-  appId: import.meta.env.VITE_FIREBASE_APP_ID,
-  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID
+  apiKey: "AIzaSyCG4UijPi9jFObhGRUyDZrXeSoPgK52AoQ",
+  authDomain: "kitchencopilot-f2f5d.firebaseapp.com",
+  projectId: "kitchencopilot-f2f5d",
+  storageBucket: "kitchencopilot-f2f5d.firebasestorage.app",
+  messagingSenderId: "650368019347",
+  appId: "1:650368019347:web:c0ba383297d35da0eb9666",
+  measurementId: "G-3SGLZLSG8K"
 };
 
 // Initialize Firebase
