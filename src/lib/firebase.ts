@@ -9,8 +9,8 @@ const firebaseConfig = {
   projectId: "kitchencopilot-f2f5d",
   storageBucket: "kitchencopilot-f2f5d.firebasestorage.app",
   messagingSenderId: "650368019347",
-  appId: "1:650368019347:web:c0ba383297d35da0eb9666",
-  measurementId: "G-3SGLZLSG8K"
+  appId: "1:650368019347:web:2a86391880f11847eb9666",
+  measurementId: "G-JZCRHMMBX0"
 };
 
 // Initialize Firebase
