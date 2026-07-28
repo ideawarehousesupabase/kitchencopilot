@@ -1,13 +1,12 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
-import { collection, query, where, getDocs, setDoc, doc, updateDoc } from "firebase/firestore";
-import { db } from "./firebase";
+import { supabase } from "./supabase";
 
 export type User = {
   id: string;
   restaurantName: string;
   ownerName: string;
   email: string;
-  password: string;
+  password: string; // Storing password in plain text as requested by the original implementation (no external auth provider)
   createdAt: string;
 };
 
@@ -39,11 +38,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const register: AuthState["register"] = async (data) => {
     try {
-      const usersRef = collection(db, "users");
-      const q = query(usersRef, where("email", "==", data.email.toLowerCase()));
-      const querySnapshot = await getDocs(q);
+      // Check if email already exists
+      const { data: existingUsers, error: checkError } = await supabase
+        .from("users")
+        .select("id")
+        .eq("email", data.email.toLowerCase());
 
-      if (!querySnapshot.empty) {
+      if (checkError) throw checkError;
+
+      if (existingUsers && existingUsers.length > 0) {
         return { ok: false, error: "An account with that email already exists." };
       }
 
@@ -54,39 +57,47 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         createdAt: new Date().toISOString(),
       };
 
-      await setDoc(doc(usersRef, id), newUser);
+      // Insert new user
+      const { error: insertError } = await supabase
+        .from("users")
+        .insert(newUser);
+
+      if (insertError) throw insertError;
+
       localStorage.setItem(SESSION_KEY, JSON.stringify(newUser));
       setUser(newUser);
       return { ok: true };
     } catch (error: any) {
+      console.error(error);
       return { ok: false, error: error.message || "Failed to register" };
     }
   };
 
   const login: AuthState["login"] = async (email, password) => {
     try {
-      const usersRef = collection(db, "users");
-      const q = query(usersRef, where("email", "==", email.toLowerCase()));
-      const querySnapshot = await getDocs(q);
+      const { data: users, error } = await supabase
+        .from("users")
+        .select("*")
+        .eq("email", email.toLowerCase());
 
-      if (querySnapshot.empty) {
+      if (error) throw error;
+
+      if (!users || users.length === 0) {
         return { ok: false, error: "Invalid email or password." };
       }
 
-      let match: User | null = null;
-      querySnapshot.forEach((docSnap) => {
-        const u = docSnap.data() as User;
-        if (u.password === password) {
-          match = u;
-        }
-      });
+      const match = users.find((u) => u.password === password);
 
-      if (!match) return { ok: false, error: "Invalid email or password." };
+      if (!match) {
+        return { ok: false, error: "Invalid email or password." };
+      }
 
-      localStorage.setItem(SESSION_KEY, JSON.stringify(match));
-      setUser(match);
+      const loggedInUser = match as User;
+      localStorage.setItem(SESSION_KEY, JSON.stringify(loggedInUser));
+      setUser(loggedInUser);
       return { ok: true };
     } catch (error: any) {
+      console.error(error);
       return { ok: false, error: error.message || "Failed to login" };
     }
   };
@@ -99,8 +110,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const updatePassword = async (newPassword: string) => {
     if (!user) return;
     try {
-      const userRef = doc(db, "users", user.id);
-      await updateDoc(userRef, { password: newPassword });
+      const { error } = await supabase
+        .from("users")
+        .update({ password: newPassword })
+        .eq("id", user.id);
+
+      if (error) throw error;
       
       const updated = { ...user, password: newPassword };
       localStorage.setItem(SESSION_KEY, JSON.stringify(updated));
@@ -114,22 +129,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!user) return { ok: false, error: "Not signed in" };
     try {
       if (data.email.toLowerCase() !== user.email.toLowerCase()) {
-        const usersRef = collection(db, "users");
-        const q = query(usersRef, where("email", "==", data.email.toLowerCase()));
-        const querySnapshot = await getDocs(q);
-        if (!querySnapshot.empty) {
+        const { data: existingUsers, error: checkError } = await supabase
+          .from("users")
+          .select("id")
+          .eq("email", data.email.toLowerCase());
+
+        if (checkError) throw checkError;
+
+        if (existingUsers && existingUsers.length > 0) {
           return { ok: false, error: "Email already in use." };
         }
       }
 
-      const userRef = doc(db, "users", user.id);
-      await updateDoc(userRef, data);
+      const { error } = await supabase
+        .from("users")
+        .update(data)
+        .eq("id", user.id);
+
+      if (error) throw error;
       
       const updated = { ...user, ...data };
       localStorage.setItem(SESSION_KEY, JSON.stringify(updated));
       setUser(updated);
       return { ok: true };
     } catch (error: any) {
+       console.error(error);
        return { ok: false, error: error.message || "Failed to update profile" };
     }
   };
